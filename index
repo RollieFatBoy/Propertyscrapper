@@ -1,1 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain.com.au Property Scraper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .property-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .property-link:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Domain.com.au Property Scraper</h1>
+            <p>Extract and analyze property listings with ease</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <h2 style="margin-bottom: 20px;">Search Parameters</h2>
+                
+                <div class="form-group">
+                    <label for="location">Location (e.g., sydney-nsw-2000)</label>
+                    <input type="text" id="location" placeholder="sydney-nsw-2000" value="sydney-nsw-2000">
+                </div>
+
+                <div class="form-group">
+                    <label for="listingType">Listing Type</label>
+                    <select id="listingType">
+                        <option value="buy">For Sale</option>
+                        <option value="rent">For Rent</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="maxPages">Maximum Pages to Scrape</label>
+                    <input type="number" id="maxPages" min="1" max="10" value="3">
+                </div>
+
+                <button class="btn" onclick="startScraping()">Start Scraping</button>
+                <button class="btn btn-secondary" onclick="exportToCSV()">Export to CSV</button>
+                <button class="btn btn-secondary" onclick="exportToJSON()">Export to JSON</button>
+            </div>
+
+            <div id="status" class="status"></div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Scraping properties... Please wait.</p>
+            </div>
+
+            <div id="results" class="results" style="display: none;">
+                <h2 style="margin-bottom: 20px;">Results</h2>
+                
+                <div class="stats" id="stats"></div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>Price</th>
+                                <th>Type</th>
+                                <th>Beds</th>
+                                <th>Baths</th>
+                                <th>Parking</th>
+                                <th>Link</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scrapedData = [];
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.querySelector('.btn').disabled = show;
+        }
+
+        async function startScraping() {
+            const location = document.getElementById('location').value;
+            const listingType = document.getElementById('listingType').value;
+            const maxPages = parseInt(document.getElementById('maxPages').value);
+
+            if (!location) {
+                showStatus('Please enter a location', 'error');
+                return;
+            }
+
+            showLoading(true);
+            showStatus('Scraping in progress...', 'info');
+            document.getElementById('results').style.display = 'none';
+
+            scrapedData = [];
+
+            try {
+                for (let page = 1; page <= maxPages; page++) {
+                    showStatus(`Scraping page ${page} of ${maxPages}...`, 'info');
+                    
+                    const url = listingType === 'buy' 
+                        ? `https://www.domain.com.au/sale/${location}/?page=${page}`
+                        : `https://www.domain.com.au/rent/${location}/?page=${page}`;
+
+                    // Note: Direct scraping from browser has CORS limitations
+                    // This is a demonstration - you'll need a proxy or backend
+                    const response = await fetch(url, {
+                        mode: 'cors',
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0'
+                        }
+                    });
+
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Parse listings (selectors may need adjustment)
+                    const listings = doc.querySelectorAll('[data-testid="listing-card-wrapper"]');
+                    
+                    listings.forEach(listing => {
+                        const property = extractPropertyData(listing, listingType);
+                        if (property) {
+                            scrapedData.push(property);
+                        }
+                    });
+
+                    // Delay between requests
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+
+                showLoading(false);
+                if (scrapedData.length > 0) {
+                    showStatus(`Successfully scraped ${scrapedData.length} properties!`, 'success');
+                    displayResults();
+                } else {
+                    showStatus('No properties found. The site structure may have changed or CORS is blocking the request.', 'error');
+                }
+
+            } catch (error) {
+                showLoading(false);
+                showStatus(`Error: ${error.message}. Note: Browser-based scraping has CORS limitations. Consider using a backend server.`, 'error');
+                console.error(error);
+            }
+        }
+
+        function extractPropertyData(listing, listingType) {
+            try {
+                const data = {
+                    address: listing.querySelector('[data-testid="address"]')?.textContent?.trim() || 'N/A',
+                    price: listing.querySelector('[data-testid="listing-card-price"]')?.textContent?.trim() || 'N/A',
+                    propertyType: listing.querySelector('[data-testid="property-type"]')?.textContent?.trim() || 'N/A',
+                    bedrooms: listing.querySelector('[data-testid="property-features-bed"]')?.textContent?.trim() || 'N/A',
+                    bathrooms: listing.querySelector('[data-testid="property-features-bath"]')?.textContent?.trim() || 'N/A',
+                    parking: listing.querySelector('[data-testid="property-features-parking"]')?.textContent?.trim() || 'N/A',
+                    url: listing.querySelector('a')?.href || 'N/A',
+                    listingType: listingType,
+                    scrapedDate: new Date().toISOString()
+                };
+
+                return data;
+            } catch (error) {
+                console.error('Error extracting property data:', error);
+                return null;
+            }
+        }
+
+        function displayResults() {
+            document.getElementById('results').style.display = 'block';
+
+            // Display stats
+            const statsHtml = `
+                <div class="stat-card">
+                    <h3>${scrapedData.length}</h3>
+                    <p>Total Listings</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${new Set(scrapedData.map(p => p.propertyType)).size}</h3>
+                    <p>Property Types</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${new Date().toLocaleDateString()}</h3>
+                    <p>Last Scraped</p>
+                </div>
+            `;
+            document.getElementById('stats').innerHTML = statsHtml;
+
+            // Display table
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            scrapedData.forEach(property => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${property.address}</td>
+                    <td>${property.price}</td>
+                    <td>${property.propertyType}</td>
+                    <td>${property.bedrooms}</td>
+                    <td>${property.bathrooms}</td>
+                    <td>${property.parking}</td>
+                    <td><a href="${property.url}" target="_blank" class="property-link">View</a></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function exportToCSV() {
+            if (scrapedData.length === 0) {
+                showStatus('No data to export. Please scrape some properties first.', 'error');
+                return;
+            }
+
+            const headers = ['Address', 'Price', 'Property Type', 'Bedrooms', 'Bathrooms', 'Parking', 'URL', 'Listing Type', 'Scraped Date'];
+            const csv = [
+                headers.join(','),
+                ...scrapedData.map(p => [
+                    `"${p.address}"`,
+                    `"${p.price}"`,
+                    `"${p.propertyType}"`,
+                    p.bedrooms,
+                    p.bathrooms,
+                    p.parking,
+                    `"${p.url}"`,
+                    p.listingType,
+                    p.scrapedDate
+                ].join(','))
+            ].join('\n');
+
+            downloadFile(csv, `domain_listings_${Date.now()}.csv`, 'text/csv');
+            showStatus('CSV file downloaded successfully!', 'success');
+        }
+
+        function exportToJSON() {
+            if (scrapedData.length === 0) {
+                showStatus('No data to export. Please scrape some properties first.', 'error');
+                return;
+            }
+
+            const json = JSON.stringify(scrapedData, null, 2);
+            downloadFile(json, `domain_listings_${Date.now()}.json`, 'application/json');
+            showStatus('JSON file downloaded successfully!', 'success');
+        }
+
+        function downloadFile(content, filename, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
